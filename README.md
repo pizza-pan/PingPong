@@ -1,2 +1,2 @@
-# Real-Time-Game
-A real time game design
+# PingPong
+A real-time game design of PingPong
