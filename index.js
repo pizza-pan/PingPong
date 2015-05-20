@@ -1,3 +1,8 @@
+angular.module('myApp', ['ngTouch','ui.bootstrap'])
+  .run(['$translate', '$log', 'realTimeService', 'randomService',
+      function ($translate, $log, realTimeService, randomService) {
+//'use strict';
+
 // RequestAnimFrame: a browser API for getting smooth animations
 window.requestAnimFrame = (function(){
 	return  window.requestAnimationFrame       || 
@@ -46,7 +51,7 @@ canvas.addEventListener("mousemove", trackPosition, true);
 canvas.addEventListener("mousedown", btnClick, true);
 
 // Initialise the collision sound
-collision = document.getElementById("collide");
+ collision = document.getElementById("collide");
 
 // Set the canvas's height and width to full screen
 canvas.width = W;
@@ -169,10 +174,38 @@ function increaseSpd() {
 }
 
 // Track the position of mouse cursor
+var lastX = null, lastY = null;
+
+function processTouch(e) {
+    //e.preventDefault(); // prevent scrolling and dispatching mouse events.
+    var touchobj = e.targetTouches[0]; // targetTouches includes only touch points in this canvas.
+    if (!touchobj) {
+      return;
+    }
+    if (lastX === null) {
+      lastX = touchobj.pageX;
+      lastY = touchobj.pageY;
+      return;
+    }
+  }
+
+  canvas.addEventListener('touchstart', function(e) {
+    lastX = null;
+    lastY = null;
+    processTouch(e);
+  }, false);
+  canvas.addEventListener('touchmove', function(e) {
+    processTouch(e);
+  }, false);
+  canvas.addEventListener('touchend', function(e) {
+    processTouch(e);
+  }, false);
+
 function trackPosition(e) {
-	mouse.x = e.pageX;
-	mouse.y = e.pageY;
+	lastX = e.pageX;
+	lastY = e.pageY;
 }
+
 
 // Function to update positions, score and everything.
 // Basically, the main game logic is defined here
@@ -182,10 +215,10 @@ function update() {
 	updateScore(); 
 	
 	// Move the paddles on mouse move
-	if(mouse.x && mouse.y) {
+	if(lastX && lastY) {
 		for(var i = 1; i < paddles.length; i++) {
 			p = paddles[i];
-			p.x = mouse.x - p.w/2;
+			p.x = lastX - p.w/2;
 		}		
 	}
 	
@@ -395,3 +428,6 @@ function btnClick(e) {
 
 // Show the start screen
 startScreen();
+
+
+}]);
