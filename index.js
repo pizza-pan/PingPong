@@ -155,7 +155,12 @@ function draw() {
 	for(var i = 0; i < paddles.length; i++) {
 		p = paddles[i];
 		
-		ctx.fillStyle = "white";
+		if(i == 1) {
+			ctx.fillStyle = "#66FFFF";
+		}
+		else{
+			ctx.fillStyle = "yellow";
+		}
 		ctx.fillRect(p.x, p.y, p.w, p.h);
 	}
 	
@@ -195,6 +200,8 @@ function processTouch(e) {
     processTouch(e);
   }, false);
   canvas.addEventListener('touchmove', function(e) {
+  	lastX = null;
+    lastY = null;
     processTouch(e);
   }, false);
   canvas.addEventListener('touchend', function(e) {
