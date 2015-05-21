@@ -28,8 +28,8 @@ window.cancelRequestAnimFrame = ( function() {
 // Initialize canvas and required variables
 var canvas = document.getElementById("canvas"),
 		ctx = canvas.getContext("2d"), // Create canvas context
-		W = window.innerWidth, // Window's width
-		H = window.innerHeight, // Window's height
+		W = 300, // Window's width
+		H = 300, // Window's height
 		particles = [], // Array containing particles
 		ball = {}, // Ball object
 		paddles = [2], // Array containing two paddles
@@ -145,8 +145,8 @@ function createParticles(x, y, m) {
 	
 	this.radius = 1.2;
 	
-	this.vx = -1.5 + Math.random()*3;
-	this.vy = m * Math.random()*1.5;
+	this.vx = -1.5 +  randomService.random(100) *3;
+	this.vy = m * randomService.random(100) * 1.5;
 }
 
 // Draw everything on canvas
@@ -182,7 +182,7 @@ function increaseSpd() {
 var lastX = null, lastY = null;
 
 function processTouch(e) {
-    e.preventDefault(); // prevent scrolling and dispatching mouse events.
+    //e.preventDefault(); // prevent scrolling and dispatching mouse events.
     var touchobj = e.targetTouches[0]; // targetTouches includes only touch points in this canvas.
     if (!touchobj) {
       return;
