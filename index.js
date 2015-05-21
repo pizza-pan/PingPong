@@ -182,7 +182,7 @@ function increaseSpd() {
 var lastX = null, lastY = null;
 
 function processTouch(e) {
-    //e.preventDefault(); // prevent scrolling and dispatching mouse events.
+    e.preventDefault(); // prevent scrolling and dispatching mouse events.
     var touchobj = e.targetTouches[0]; // targetTouches includes only touch points in this canvas.
     if (!touchobj) {
       return;
