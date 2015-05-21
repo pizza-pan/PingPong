@@ -1,7 +1,24 @@
 angular.module('myApp', ['ngTouch','ui.bootstrap'])
   .run(['$translate', '$log', 'realTimeService', 'randomService',
       function ($translate, $log, realTimeService, randomService) {
-//'use strict';
+'use strict';
+
+var canvasWidth = 300;
+var canvasHeight = 300;
+var multiplier;
+var par;
+
+
+function createCanvasController(canvas) {
+  $log.info("createCanvasController for canvas.id=" + canvas.id);
+  var isGameOngoing = false;
+  var isSinglePlayer = false;
+  var playersInfo = null;
+  var yourPlayerIndex = null;
+  var matchController = null;
+  var startMatchTime; // For displaying a countdown.
+
+  var allScores = [];
 
 // RequestAnimFrame: a browser API for getting smooth animations
 window.requestAnimFrame = (function(){
@@ -21,13 +38,33 @@ window.cancelRequestAnimFrame = ( function() {
 		window.mozCancelRequestAnimationFrame       ||
 		window.oCancelRequestAnimationFrame     ||
 		window.msCancelRequestAnimationFrame        ||
-		clearTimeout
+		clearTimeout;
 } )();
 
+  function gotStartMatch(params) {
+    yourPlayerIndex = params.yourPlayerIndex;
+    playersInfo = params.playersInfo;
+    matchController = params.matchController;
+    isGameOngoing = true;
+    isSinglePlayer = playersInfo.length === 1;
+
+    startMatchTime = new Date().getTime();
+    startScreen();
+
+  }
+
+  function gotMessage(params) {
+  }
+
+    function gotEndMatch(endMatchScores) {
+    // Note that endMatchScores can be null if the game was cancelled (e.g., someone disconnected).
+    allScores = endMatchScores;
+    isGameOngoing = false;
+    
+  }
 
 // Initialize canvas and required variables
-var canvas = document.getElementById("canvas"),
-		ctx = canvas.getContext("2d"), // Create canvas context
+		var ctx = canvas.getContext("2d"), // Create canvas context
 		W = 300, // Window's width
 		H = 300, // Window's height
 		particles = [], // Array containing particles
@@ -43,15 +80,16 @@ var canvas = document.getElementById("canvas"),
 		startBtn = {}, // Start button object
 		restartBtn = {}, // Restart button object
 		over = 0, // flag varialbe, cahnged when the game is over
-		init, // variable to initialize animation
+		inita, // variable to initialize animation
 		paddleHit;
+		
 
 // Add mousemove and mousedown events to the canvas
 canvas.addEventListener("mousemove", trackPosition, true);
 canvas.addEventListener("mousedown", btnClick, true);
 
 // Initialise the collision sound
- collision = document.getElementById("collide");
+var collision = document.getElementById("collide");
 
 // Set the canvas's height and width to full screen
 canvas.width = W;
@@ -67,11 +105,11 @@ function paintCanvas() {
 function Paddle(pos) {
 	// Height and width
 	this.h = 5;
-	this.w = 150;
+	this.w = 80;
 	
 	// Paddle's position
 	this.x = W/2 - this.w/2;
-	this.y = (pos == "top") ? 0 : H - this.h;
+	this.y = (pos === "top") ? 0 : H - this.h;
 	
 }
 
@@ -140,7 +178,7 @@ restartBtn = {
 
 // Function for creating particles object
 function createParticles(x, y, m) {
-	this.x = x || 0;
+    this.x = x || 0;
 	this.y = y || 0;
 	
 	this.radius = 1.2;
@@ -153,7 +191,7 @@ function createParticles(x, y, m) {
 function draw() {
 	paintCanvas();
 	for(var i = 0; i < paddles.length; i++) {
-		p = paddles[i];
+		var p = paddles[i];
 		
 		if(i == 1) {
 			ctx.fillStyle = "#66FFFF";
@@ -218,14 +256,32 @@ function trackPosition(e) {
 // Basically, the main game logic is defined here
 function update() {
 	
+	var secondsFromStart =
+    Math.floor((new Date().getTime() - startMatchTime) / 1000);
+    if (secondsFromStart < 3) {
+      // Countdown to really start
+      // Draw countdown
+      var secondsToReallyStart = 3 - secondsFromStart;
+
+
+      ctx.fillStyle = "white";
+      ctx.font = '80px sans-serif';
+      ctx.fillText("" + secondsToReallyStart, W / 2, H / 2);
+
+      secondsFromStart =
+      Math.floor((new Date().getTime() - startMatchTime) / 1000);
+
+      return;
+
+    }
 	// Update scores
 	updateScore(); 
 	
 	// Move the paddles on mouse move
 	if(lastX && lastY) {
 		for(var i = 1; i < paddles.length; i++) {
-			p = paddles[i];
-			p.x = lastX - p.w/2;
+			var p = paddles[i];
+			p.x = lastX -  (window.innerWidth-W)/2 - p.w/2;
 		}		
 	}
 	
@@ -234,8 +290,8 @@ function update() {
 	ball.y += ball.vy;
 	
 	// Collision with paddles
-	p1 = paddles[1];
-	p2 = paddles[2];
+	var p1 = paddles[1];
+	var p2 = paddles[2];
 	
 	// If the ball strikes with paddles,
 	// invert the y-velocity vector of ball,
@@ -375,6 +431,20 @@ function updateScore() {
 
 // Function to run when the game overs
 function gameOver() {
+	if (!isGameOngoing) {
+      return;
+    }
+    // Stop the Animation
+	cancelRequestAnimFrame(inita);
+    isGameOngoing = false;
+    allScores[yourPlayerIndex] = points;
+    matchController.endMatch(allScores);
+
+    // Set the over flag
+	over = 1;
+	
+	
+	/*
 	ctx.fillStlye = "white";
 	ctx.font = "20px Arial, sans-serif";
 	ctx.textAlign = "center";
@@ -384,23 +454,41 @@ function gameOver() {
 	// Stop the Animation
 	cancelRequestAnimFrame(init);
 	
-	// Set the over flag
-	over = 1;
 	
 	// Show the restart button
 	restartBtn.draw();
+	*/
 }
 
 // Function for running the whole animation
 function animloop() {
-	init = requestAnimFrame(animloop);
+	inita = requestAnimFrame(animloop);
 	draw();
 }
 
 // Function to execute at startup
 function startScreen() {
 	draw();
-	startBtn.draw();
+
+	if(over == 1) {
+
+			ball.x = 20;
+			ball.y = 20;
+			points = 0;
+			ball.vx = 4;
+			ball.vy = 8;
+
+			for(var i = 1; i < paddles.length; i++) {
+			var p = paddles[i];
+			p.x = W/2 - 40;
+			}		
+
+			points = 0;
+			
+			over = 0;
+
+	}
+	animloop();
 }
 
 // On button click (Restart and start)
@@ -433,8 +521,20 @@ function btnClick(e) {
 	}
 }
 
-// Show the start screen
-startScreen();
+  return {
+    gotStartMatch: gotStartMatch,
+    gotMessage: gotMessage,
+    gotEndMatch: gotEndMatch
+  };
+} // end of createCanvasController
 
+
+realTimeService.init({
+  createCanvasController: createCanvasController,
+  canvasWidth: canvasWidth,
+  canvasHeight: canvasHeight
+});
+
+// Show the start screen
 
 }]);
